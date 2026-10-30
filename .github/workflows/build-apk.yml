@@ -24,6 +24,16 @@ jobs:
           chmod +x gradlew
           ls -la
 
+      - name: Fix Compose for Kotlin 2.0
+        run: |
+          # Remove kotlinCompilerExtensionVersion que conflita com Kotlin 2.0
+          sed -i '/kotlinCompilerExtensionVersion/d' app/build.gradle.kts
+          sed -i '/composeOptions/,/}/d' app/build.gradle.kts
+          # Remove propriedade deprecada
+          sed -i '/android.defaults.buildfeatures.buildconfig/d' gradle.properties
+          echo "=== app/build.gradle.kts (trecho) ==="
+          grep -A5 -B5 "compose\|kotlin" app/build.gradle.kts || true
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -36,8 +46,7 @@ jobs:
           packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
       - name: Accept licenses
-        run: |
-          yes | sdkmanager --licenses || true
+        run: yes | sdkmanager --licenses || true
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
